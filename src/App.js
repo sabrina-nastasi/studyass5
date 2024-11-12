@@ -1,25 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import React, { Component } from "react";
+import FileUpload from "./FileUpload"; 
+import Child1 from "./Child1"; 
+import "./App.css"; 
+class App extends Component {
+  state = {
+    csv_data: [] 
+  };
+  handleFileUpload = (csv_data) => {
+    this.setState({ csv_data });
+  };
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>Stock Price Visualization</h1>
+          {/* File upload to accept CSV data */}
+          <FileUpload onFileUpload={this.handleFileUpload} />
+          {/* Child1 renders only if csv_data is available */}
+          {this.state.csv_data.length > 0 && (
+            <Child1 csv_data={this.state.csv_data} />
+          )}
+        </header>
+      </div>
+    );
+  }
 }
-
 export default App;
