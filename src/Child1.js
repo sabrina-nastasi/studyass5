@@ -79,8 +79,8 @@ class Child1 extends Component {
     const y = d3
       .scaleLinear()
       .domain([
-        Math.floor(d3.min(filteredData, (d) => Math.min(d.Open, d.Close))/4)*4,
-        Math.ceil(d3.max(filteredData, (d) => Math.max(d.Open, d.Close))/4)*4,
+        Math.floor(d3.min(filteredData, (d) => Math.min(d.Open, d.Close))/2)*2,
+        Math.ceil(d3.max(filteredData, (d) => Math.max(d.Open, d.Close))/2)*2,
       ])
       .nice()
       .range([height, 0]);
