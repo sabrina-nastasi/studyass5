@@ -76,22 +76,39 @@ class Child1 extends Component {
       .attr("transform", "rotate(-45)") 
       .style("text-anchor", "end");
 
-    const y = d3
-      .scaleLinear()
-      .domain([
-        Math.floor(d3.min(filteredData, (d) => Math.min(d.Open, d.Close))/2)*2,
-        Math.ceil(d3.max(filteredData, (d) => Math.max(d.Open, d.Close))/2)*2,
-      ])
-      .nice()
-      .range([height, 0]);
-    svg
-      .append("g")
-      .call(
-        d3
-          .axisLeft(y)
-          .ticks(10) 
-          .tickFormat((d) => d) 
-      );
+      const y = d3
+  .scaleLinear()
+  .domain([
+    Math.floor(d3.min(filteredData, (d) => Math.min(d.Open, d.Close))),
+    Math.ceil(d3.max(filteredData, (d) => Math.max(d.Open, d.Close))),
+  ])
+  .nice()
+  .range([height, 0]);
+
+const maxTicks = 10; 
+const tickInterval = 2; 
+
+const domainRange = y.domain()[1] - y.domain()[0];
+const calculatedTicks = Math.min(maxTicks, Math.floor(domainRange / tickInterval));
+
+svg
+  .append("g")
+  .call(
+    d3
+      .axisLeft(y)
+      .ticks(calculatedTicks) 
+      .tickValues(
+        d3.range(
+          Math.floor(y.domain()[0]),
+          Math.ceil(y.domain()[1]) + tickInterval,
+          tickInterval
+        )
+      ) 
+      .tickFormat((d) => d) 
+  );
+
+
+    
     const lineOpen = d3
       .line()
       .x((d) => x(d.Date))
