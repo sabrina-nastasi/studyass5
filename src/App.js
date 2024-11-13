@@ -13,7 +13,7 @@ class App extends Component {
     return (
       <div className="App">
         <header className="App-header">
-          <h1>Stock Price Visualization</h1>
+          <h1>Upload a CSV File</h1>
           {/* File upload to accept CSV data */}
           <FileUpload onFileUpload={this.handleFileUpload} />
           {/* Child1 renders only if csv_data is available */}

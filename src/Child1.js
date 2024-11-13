@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import * as d3 from "d3";
 import "./Child1.css";
+
 class Child1 extends Component {
   state = {
     company: "Apple",
     selectedMonth: "November",
   };
+
   componentDidUpdate(prevProps, prevState) {
     if (
       prevProps.csv_data !== this.props.csv_data ||
@@ -15,27 +17,34 @@ class Child1 extends Component {
       this.drawChart();
     }
   }
+
   handleCompanyChange = (event) => {
     this.setState({ company: event.target.value });
   };
+
   handleMonthChange = (event) => {
     this.setState({ selectedMonth: event.target.value });
   };
+
   drawChart() {
     const { csv_data } = this.props;
     const { company, selectedMonth } = this.state;
+
+    // Clear previous chart
     d3.select("#chart").selectAll("*").remove();
 
     if (!csv_data || csv_data.length === 0) {
       console.log("No data available for drawing");
       return;
     }
+
     const parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S%Z");
+
     const filteredData = csv_data
       .map((d) => ({
         Date: parseDate(d.Date),
-        Open: +d.Open,
-        Close: +d.Close,
+        Open: parseFloat(d.Open),
+        Close: parseFloat(d.Close),
         Company: d.Company,
       }))
       .filter(
@@ -44,13 +53,16 @@ class Child1 extends Component {
           d.Date &&
           d.Date.toLocaleString("default", { month: "long" }) === selectedMonth
       );
+
     if (filteredData.length === 0) {
       console.log("No matching data for selection");
       return;
     }
-    const margin = { top: 40, right: 30, bottom: 50, left: 60 };
+
+    const margin = { top: 20, right: 30, bottom: 50, left: 50 };
     const width = 800 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
+
     const svg = d3
       .select("#chart")
       .append("svg")
@@ -58,6 +70,7 @@ class Child1 extends Component {
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
+
     const x = d3
       .scaleTime()
       .domain(d3.extent(filteredData, (d) => d.Date))
@@ -65,46 +78,60 @@ class Child1 extends Component {
 
     const y = d3
       .scaleLinear()
-      .domain([
-        d3.min(filteredData, (d) => Math.min(d.Open, d.Close)),
-        d3.max(filteredData, (d) => Math.max(d.Open, d.Close)),
-      ])
+      .domain([0, d3.max(filteredData, (d) => Math.max(d.Open, d.Close))])
       .nice()
       .range([height, 0]);
+
     svg
       .append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x).ticks(5))
-      .attr("class", "x-axis")
-      .style("color", "black"); 
-    svg
-      .append("g")
-      .call(d3.axisLeft(y))
-      .attr("class", "y-axis")
-      .style("color", "black"); 
+      .call(d3.axisBottom(x).ticks(10).tickFormat(d3.timeFormat("%b %d")))
+      .selectAll("text")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
+
+    svg.append("g").call(d3.axisLeft(y));
+
     const lineOpen = d3
       .line()
       .x((d) => x(d.Date))
-      .y((d) => y(d.Open));
+      .y((d) => y(d.Open))
+      .curve(d3.curveMonotoneX);
 
     const lineClose = d3
       .line()
       .x((d) => x(d.Date))
-      .y((d) => y(d.Close));
+      .y((d) => y(d.Close))
+      .curve(d3.curveMonotoneX);
+
     svg
       .append("path")
       .datum(filteredData)
       .attr("fill", "none")
       .attr("stroke", "#b2df8a")
-      .attr("stroke-width", 2)
+      .attr("stroke-width", 1.5)
       .attr("d", lineOpen);
+
     svg
       .append("path")
       .datum(filteredData)
       .attr("fill", "none")
       .attr("stroke", "#e41a1c")
-      .attr("stroke-width", 2)
+      .attr("stroke-width", 1.5)
       .attr("d", lineClose);
+
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0)
+      .style("position", "absolute")
+      .style("background-color", "white")
+      .style("border", "1px solid #ccc")
+      .style("padding", "8px")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none");
+
     svg
       .selectAll(".dot-open")
       .data(filteredData)
@@ -115,19 +142,23 @@ class Child1 extends Component {
       .attr("cy", (d) => y(d.Open))
       .attr("r", 4)
       .attr("fill", "#b2df8a")
-      .on("mouseover", (event, d) => {
-        const tooltip = d3.select("#tooltip");
+      .on("mouseover", function (event, d) {
         tooltip
-          .style("opacity", 1)
           .html(
-            `Date: ${d.Date.toDateString()}<br>Open: ${d.Open}<br>Close: ${d.Close}<br>Difference: ${(d.Close - d.Open).toFixed(2)}`
+            `Date: ${d3.timeFormat("%m/%d/%Y")(d.Date)}<br>Open: ${d.Open.toFixed(
+              2
+            )}<br>Close: ${d.Close.toFixed(2)}<br>Difference: ${(
+              d.Close - d.Open
+            ).toFixed(2)}`
           )
-          .style("left", `${event.pageX + 10}px`)
-          .style("top", `${event.pageY - 28}px`);
+          .style("left", event.pageX + "px")
+          .style("top", event.pageY - 28 + "px")
+          .style("opacity", 1);
       })
-      .on("mouseout", () => {
-        d3.select("#tooltip").style("opacity", 0);
+      .on("mouseout", function () {
+        tooltip.style("opacity", 0);
       });
+
     svg
       .selectAll(".dot-close")
       .data(filteredData)
@@ -137,37 +168,53 @@ class Child1 extends Component {
       .attr("cx", (d) => x(d.Date))
       .attr("cy", (d) => y(d.Close))
       .attr("r", 4)
-      .attr("fill", "#e41a1c");
-    const legend = svg
-      .append("g")
-      .attr("transform", `translate(${width - 100}, 0)`);
-    legend
+      .attr("fill", "#e41a1c")
+      .on("mouseover", function (event, d) {
+        tooltip
+          .html(
+            `Date: ${d3.timeFormat("%m/%d/%Y")(d.Date)}<br>Open: ${d.Open.toFixed(
+              2
+            )}<br>Close: ${d.Close.toFixed(2)}<br>Difference: ${(
+              d.Close - d.Open
+            ).toFixed(2)}`
+          )
+          .style("left", event.pageX + "px")
+          .style("top", event.pageY - 28 + "px")
+          .style("opacity", 1);
+      })
+      .on("mouseout", function () {
+        tooltip.style("opacity", 0);
+      });
+
+    svg
       .append("circle")
-      .attr("cx", 0)
-      .attr("cy", 0)
+      .attr("cx", width - 100)
+      .attr("cy", 10)
       .attr("r", 6)
       .style("fill", "#b2df8a");
-    legend
+    svg
       .append("text")
-      .attr("x", 10)
-      .attr("y", 5)
+      .attr("x", width - 80)
+      .attr("y", 15)
       .text("Open")
-      .style("fill", "black")
-      .style("font-size", "12px");
-    legend
+      .style("font-size", "15px")
+      .attr("alignment-baseline", "middle");
+
+    svg
       .append("circle")
-      .attr("cx", 0)
-      .attr("cy", 20)
+      .attr("cx", width - 100)
+      .attr("cy", 30)
       .attr("r", 6)
       .style("fill", "#e41a1c");
-    legend
+    svg
       .append("text")
-      .attr("x", 10)
-      .attr("y", 25)
+      .attr("x", width - 80)
+      .attr("y", 35)
       .text("Close")
-      .style("fill", "black")
-      .style("font-size", "12px");
+      .style("font-size", "15px")
+      .attr("alignment-baseline", "middle");
   }
+
   render() {
     const options = ["Apple", "Microsoft", "Amazon", "Google", "Meta"];
     const months = [
@@ -184,12 +231,14 @@ class Child1 extends Component {
       "November",
       "December",
     ];
+
     return (
       <div className="child1">
-        <div style={{ color: "black" }}>
+        <h1>Upload a CSV File</h1>
+        <div>
           <h3>Select a Company:</h3>
           {options.map((option) => (
-            <label key={option} style={{ marginRight: "10px" }}>
+            <label key={option}>
               <input
                 type="radio"
                 value={option}
@@ -200,7 +249,8 @@ class Child1 extends Component {
             </label>
           ))}
         </div>
-        <div style={{ color: "black", marginTop: "20px" }}>
+
+        <div>
           <h3>Select a Month:</h3>
           <select
             value={this.state.selectedMonth}
@@ -213,10 +263,11 @@ class Child1 extends Component {
             ))}
           </select>
         </div>
+
         <div id="chart"></div>
-        <div id="tooltip" className="tooltip" style={{ opacity: 0 }}></div>
       </div>
     );
   }
 }
+
 export default Child1;
