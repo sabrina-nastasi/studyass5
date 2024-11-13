@@ -1,13 +1,11 @@
 import React, { Component } from "react";
 import * as d3 from "d3";
 import "./Child1.css";
-
 class Child1 extends Component {
   state = {
     company: "Apple",
     selectedMonth: "November",
   };
-
   componentDidUpdate(prevProps, prevState) {
     if (
       prevProps.csv_data !== this.props.csv_data ||
@@ -17,7 +15,6 @@ class Child1 extends Component {
       this.drawChart();
     }
   }
-
   handleCompanyChange = (event) => {
     this.setState({ company: event.target.value });
   };
@@ -25,21 +22,16 @@ class Child1 extends Component {
   handleMonthChange = (event) => {
     this.setState({ selectedMonth: event.target.value });
   };
-
   drawChart() {
     const { csv_data } = this.props;
     const { company, selectedMonth } = this.state;
-
-    // Clear previous chart
     d3.select("#chart").selectAll("*").remove();
 
     if (!csv_data || csv_data.length === 0) {
       console.log("No data available for drawing");
       return;
     }
-
     const parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S%Z");
-
     const filteredData = csv_data
       .map((d) => ({
         Date: parseDate(d.Date),
@@ -53,16 +45,13 @@ class Child1 extends Component {
           d.Date &&
           d.Date.toLocaleString("default", { month: "long" }) === selectedMonth
       );
-
     if (filteredData.length === 0) {
       console.log("No matching data for selection");
       return;
     }
-
     const margin = { top: 20, right: 30, bottom: 50, left: 50 };
     const width = 800 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
-
     const svg = d3
       .select("#chart")
       .append("svg")
@@ -70,40 +59,49 @@ class Child1 extends Component {
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const x = d3
+      const x = d3
       .scaleTime()
       .domain(d3.extent(filteredData, (d) => d.Date))
       .range([0, width]);
-
-    const y = d3
-      .scaleLinear()
-      .domain([0, d3.max(filteredData, (d) => Math.max(d.Open, d.Close))])
-      .nice()
-      .range([height, 0]);
-
     svg
       .append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x).ticks(10).tickFormat(d3.timeFormat("%b %d")))
+      .call(
+        d3
+          .axisBottom(x)
+          .ticks(10) 
+          .tickFormat(d3.timeFormat("%a %d")) 
+      )
       .selectAll("text")
-      .attr("transform", "rotate(-45)")
+      .attr("transform", "rotate(-45)") 
       .style("text-anchor", "end");
 
-    svg.append("g").call(d3.axisLeft(y));
-
+    const y = d3
+      .scaleLinear()
+      .domain([
+        Math.floor(d3.min(filteredData, (d) => Math.min(d.Open, d.Close))/4)*4,
+        Math.ceil(d3.max(filteredData, (d) => Math.max(d.Open, d.Close))/4)*4,
+      ])
+      .nice()
+      .range([height, 0]);
+    svg
+      .append("g")
+      .call(
+        d3
+          .axisLeft(y)
+          .ticks(10) 
+          .tickFormat((d) => d) 
+      );
     const lineOpen = d3
       .line()
       .x((d) => x(d.Date))
       .y((d) => y(d.Open))
       .curve(d3.curveMonotoneX);
-
     const lineClose = d3
       .line()
       .x((d) => x(d.Date))
       .y((d) => y(d.Close))
       .curve(d3.curveMonotoneX);
-
     svg
       .append("path")
       .datum(filteredData)
@@ -111,7 +109,6 @@ class Child1 extends Component {
       .attr("stroke", "#b2df8a")
       .attr("stroke-width", 1.5)
       .attr("d", lineOpen);
-
     svg
       .append("path")
       .datum(filteredData)
@@ -119,7 +116,6 @@ class Child1 extends Component {
       .attr("stroke", "#e41a1c")
       .attr("stroke-width", 1.5)
       .attr("d", lineClose);
-
     const tooltip = d3
       .select("body")
       .append("div")
@@ -131,7 +127,6 @@ class Child1 extends Component {
       .style("padding", "8px")
       .style("border-radius", "4px")
       .style("pointer-events", "none");
-
     svg
       .selectAll(".dot-open")
       .data(filteredData)
@@ -158,7 +153,6 @@ class Child1 extends Component {
       .on("mouseout", function () {
         tooltip.style("opacity", 0);
       });
-
     svg
       .selectAll(".dot-close")
       .data(filteredData)
@@ -185,7 +179,6 @@ class Child1 extends Component {
       .on("mouseout", function () {
         tooltip.style("opacity", 0);
       });
-
     svg
       .append("circle")
       .attr("cx", width - 100)
@@ -214,7 +207,6 @@ class Child1 extends Component {
       .style("font-size", "15px")
       .attr("alignment-baseline", "middle");
   }
-
   render() {
     const options = ["Apple", "Microsoft", "Amazon", "Google", "Meta"];
     const months = [
@@ -231,7 +223,6 @@ class Child1 extends Component {
       "November",
       "December",
     ];
-
     return (
       <div className="child1">
         <h1>Upload a CSV File</h1>
@@ -249,7 +240,6 @@ class Child1 extends Component {
             </label>
           ))}
         </div>
-
         <div>
           <h3>Select a Month:</h3>
           <select
@@ -263,11 +253,9 @@ class Child1 extends Component {
             ))}
           </select>
         </div>
-
         <div id="chart"></div>
       </div>
     );
   }
 }
-
 export default Child1;
