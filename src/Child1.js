@@ -76,7 +76,7 @@ class Child1 extends Component {
       .attr("transform", "rotate(-45)") 
       .style("text-anchor", "end");
 
-      const y = d3
+  const y = d3
   .scaleLinear()
   .domain([
     Math.floor(d3.min(filteredData, (d) => Math.min(d.Open, d.Close))),
